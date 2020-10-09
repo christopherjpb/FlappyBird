@@ -1,60 +1,110 @@
 const sprites = new Image()
 sprites.src = './sprites.png'
+const soundHit = new Audio()
+soundHit.src = './sound/hit.wav'
 
 const canvas = document.querySelector('canvas')
 const contexto = canvas.getContext('2d')
 
-const bird = {
-    img: sprites,
-    sx: 0,
-    sy: 0,
-    lag: 34,
-    alt: 24,
-    x: 50,
-    y: 50,
-    gravidadeZero: 0,
-    gravidade: 0.08,
-    desenha() {
-        contexto.drawImage(
-            bird.img,
-            bird.sx, bird.sy,
-            bird.lag, bird.alt,
-            bird.x, bird.y,
-            bird.lag, bird.alt
-        )
-    },
+let frames = 0
 
-    cair() {
-        bird.gravidadeZero = bird.gravidadeZero + bird.gravidade
-        bird.y = bird.y + bird.gravidadeZero
+function createBird() {
+    const bird = {
+        img: sprites,
+        sx: 0,
+        sy: 0,
+        lag: 34,
+        alt: 24,
+        x: 50,
+        y: 50,
+        gravidadeZero: 0,
+        gravidade: 0.08,
+        antiGravidade: 2.3,
+        action: [ // movimento das asas
+            {sx: 0, sy: 0}, // asa para cima
+            {sx: 0, sy: 26}, // asa no meio
+            {sx: 0, sy: 52} // asa para baixo
+        ],
+        frameInicial: 0,
+        atualizaFrame() {
+            const baterAsasIntervalo = (frames%10) === 0 // bater asas no intervalo de 10 frames
+            if (baterAsasIntervalo) {
+                bird.frameInicial = (1 + bird.frameInicial)%(bird.action.length) // trocar o bater de asa do "action"
+            }
+        },
+        desenha() {
+            bird.atualizaFrame()
+            const {sx, sy} = bird.action[bird.frameInicial]
+            contexto.drawImage(
+                bird.img,
+                sx, sy,
+                bird.lag, bird.alt,
+                bird.x, bird.y,
+                bird.lag, bird.alt
+            )
+        },
+
+        cair() {
+            if (bird.y > 364) {
+                soundHit.play()
+                setTimeout(() => {
+                    mudaTela(tela.Start)
+                }, 500)
+                return
+            }
+
+            bird.gravidadeZero = bird.gravidadeZero + bird.gravidade
+            bird.y = bird.y + bird.gravidadeZero
+        },
+
+        sobe() {
+            bird.gravidadeZero = - bird.antiGravidade
+        }
     }
+    return bird
 }
 
-const ground = {
-    img: sprites,
-    sx: 0,
-    sy: 610,
-    lag: 224,
-    alt: 112,
-    x: 0,
-    y: 387,
-    desenha() {
-        contexto.drawImage(
-            ground.img,
-            ground.sx, ground.sy,
-            ground.lag, ground.alt,
-            ground.x, ground.y,
-            ground.lag, ground.alt
-        )
+function createGround() {
+    const ground = {
+        img: sprites,
+        sx: 0,
+        sy: 610,
+        lag: 224,
+        alt: 112,
+        x: 0,
+        y: 387,
+        desenha() {
+            contexto.drawImage(
+                ground.img,
+                ground.sx, ground.sy,
+                ground.lag, ground.alt,
+                ground.x, ground.y,
+                ground.lag, ground.alt
+            )
+    
+            contexto.drawImage(
+                ground.img,
+                ground.sx, ground.sy,
+                ground.lag, ground.alt,
+                ground.x + ground.lag, ground.y,
+                ground.lag, ground.alt
+            )
 
-        contexto.drawImage(
-            ground.img,
-            ground.sx, ground.sy,
-            ground.lag, ground.alt,
-            ground.x + ground.lag, ground.y,
-            ground.lag, ground.alt
-        )
+            contexto.drawImage(
+                ground.img,
+                ground.sx, ground.sy,
+                ground.lag, ground.alt,
+                ground.x + ground.lag + ground.lag, ground.y,
+                ground.lag, ground.alt
+            )
+        },
+
+        atualiza() {
+            ground.x = ground.x - 0.5
+            ground.x = (ground.x - 1)%(ground.y / 2)
+        }
     }
+    return ground
 }
 
 const background = {
@@ -106,36 +156,46 @@ const startReady = {
     }
 }
 
+const global = {}
 let telaAtiva = {}
 function mudaTela(novaTela) {
     telaAtiva = novaTela
+    if (telaAtiva.initialize) {
+        telaAtiva.initialize()
+    }
 }
 
 const tela = {
     Start: {
+        initialize() {
+            global.bird = createBird()
+            global.ground = createGround()
+        },
         desenha() {
             background.desenha()
-            ground.desenha()
+            global.ground.desenha()
             startReady.desenha()
         },
         click() {
             mudaTela(tela.Game)
         },
         atualiza() {
+            global.ground.atualiza()
         }
     },
 
     Game: {
         desenha() {
-            bird.cair()
             background.desenha()
-            ground.desenha()
-            bird.desenha()
+            global.ground.desenha()
+            global.bird.desenha()
         },
         click() {
+            global.bird.sobe()
         },
         atualiza() {
-            //bird.atualiza()
+            global.bird.cair()
+            global.ground.atualiza()
         }
     }
 }
@@ -143,10 +203,12 @@ const tela = {
 function loop() {
     telaAtiva.desenha()
     telaAtiva.atualiza()
+
+    frames += 1
     requestAnimationFrame(loop)
 }
 
-window.addEventListener('click', function() {
+window.addEventListener('click', function () {
     if (telaAtiva.click) {
         telaAtiva.click()
     }
