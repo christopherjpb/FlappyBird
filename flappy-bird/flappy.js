@@ -228,7 +228,7 @@ function createTube() {
                     console.log('Cano de Baixo')
                     soundHit.play()
                     return true
-                } 
+                }
             }
             return false
         },
@@ -345,7 +345,7 @@ window.addEventListener('keypress', (e) => {
     if (e.code == 'Space' || telaAtiva.click) {
         telaAtiva.click()
     }
-})  
+})
 
 mudaTela(tela.Start)
 loop()
