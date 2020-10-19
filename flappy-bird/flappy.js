@@ -1,5 +1,5 @@
 const sprites = new Image()
-sprites.src = './sprites.png'
+sprites.src = './img/sprites.png'
 const soundHit = new Audio()
 soundHit.src = './sound/hit.wav'
 const soundCaiu = new Audio()
