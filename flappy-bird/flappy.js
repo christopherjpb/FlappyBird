@@ -335,14 +335,14 @@ function loop() {
     requestAnimationFrame(loop)
 }
 
-// window.addEventListener('click', function () {
-//     if (telaAtiva.click) {
-//         telaAtiva.click()
-//     }
-// })
+window.addEventListener('click', function () {
+    if (telaAtiva.click) {
+        telaAtiva.click()
+    }
+})
 
 window.addEventListener('keypress', (e) => {
-    if (e.code == 'Space' || telaAtiva.click) {
+    if (e.code == 'Space') {
         telaAtiva.click()
     }
 })
